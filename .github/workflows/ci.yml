@@ -1,14 +1,11 @@
-name: GitHub Classroom Workflow
+name: Build
 on:
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
 jobs:
   build:
-    name: Autograding
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,7 +21,6 @@ jobs:
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify
 
-
       - name: Deploy project
         uses: akhileshns/heroku-deploy@v3.4.6
         with:
@@ -33,24 +29,14 @@ jobs:
           heroku_email: vgilkojob@gmail.com
           usedocker: true
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+
       - name: Run API Tests
-        uses: matt-ball/newman-action@master
+        id: run-newman
+        uses: anthonyvscode/newman-action@v1
         with:
           collection: postman/[inst] Lab1.postman_collection.json
           environment: postman/[inst][heroku] Lab1.postman_environment.json
           delayRequest: 100
-          reporters: '[ "cli" ]'
-
-      - name: Autograding
-        uses: education/autograding@v1
-        continue-on-error: true
-
-      - name: Github auto grader mark
-        uses: Romanow/google-sheet-autograder-marker@v1.0
-        with:
-          google_token: ${{secrets.GOOGLE_API_KEY}}
-          sheet_id: "1xkgjUX6Qmk7rdJG-QPOToav-HWWtthJjnShIKnw3oIY"
-          homework_number: 1
-          user_column: 'D'
-          column_offset: 'F'
-          mark: "'+"
+          reporters: cli
